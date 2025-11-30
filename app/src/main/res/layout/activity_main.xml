@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center_horizontal"
+    android:background="@color/white">
+
+    <!-- Indicateur Partie -->
+    <TextView
+        android:id="@+id/tv_partie_info"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Partie 1/5"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@color/xo_blue_dark"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="30dp"/>
+
+    <!-- Tableau des scores -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/bg_button_blue"
+        android:backgroundTint="@color/xo_score_bg"
+        android:padding="20dp"
+        android:layout_marginBottom="50dp">
+
+        <TextView android:id="@+id/tv_score_x"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Score du joueur X: 0"
+            android:textSize="18sp"
+            android:textColor="@color/black"/>
+
+        <TextView android:id="@+id/tv_score_o"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Score du Joueur O: 0"
+            android:textSize="18sp"
+            android:textColor="@color/black"/>
+
+        <TextView android:id="@+id/tv_score_nulles"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nombre de parties nulles: 0"
+            android:textSize="18sp"
+            android:textColor="@color/black"/>
+    </LinearLayout>
+
+    <!-- Grille de jeu (GridLayout 3x3) -->
+    <GridLayout
+        android:id="@+id/gridLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:rowCount="3"
+        android:columnCount="3"
+        android:layout_gravity="center"
+        android:background="@color/black"
+        android:useDefaultMargins="false"
+        android:orientation="horizontal"
+        android:columnOrderPreserved="false"
+        android:padding="2dp">
+
+        <!-- Ligne 1 -->
+        <Button android:id="@+id/btn0" android:onClick="onGridClick" android:tag="0"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case haut gauche"
+            android:layout_marginRight="2dp" android:layout_marginBottom="2dp"/>
+        <Button android:id="@+id/btn1" android:onClick="onGridClick" android:tag="1"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case haut milieu"
+            android:layout_marginRight="2dp" android:layout_marginBottom="2dp"/>
+        <Button android:id="@+id/btn2" android:onClick="onGridClick" android:tag="2"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case haut droit"
+            android:layout_marginBottom="2dp"/>
+
+        <!-- Ligne 2 -->
+        <Button android:id="@+id/btn3" android:onClick="onGridClick" android:tag="3"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case milieu gauche"
+            android:layout_marginRight="2dp" android:layout_marginBottom="2dp"/>
+        <Button android:id="@+id/btn4" android:onClick="onGridClick" android:tag="4"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case milieu centre"
+            android:layout_marginRight="2dp" android:layout_marginBottom="2dp"/>
+        <Button android:id="@+id/btn5" android:onClick="onGridClick" android:tag="5"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case milieu droit"
+            android:layout_marginBottom="2dp"/>
+
+        <!-- Ligne 3 -->
+        <Button android:id="@+id/btn6" android:onClick="onGridClick" android:tag="6"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case bas gauche"
+            android:layout_marginRight="2dp"/>
+        <Button android:id="@+id/btn7" android:onClick="onGridClick" android:tag="7"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case bas milieu"
+            android:layout_marginRight="2dp"/>
+        <Button android:id="@+id/btn8" android:onClick="onGridClick" android:tag="8"
+            android:layout_width="100dp" android:layout_height="100dp"
+            android:background="@android:color/white"
+            app:backgroundTint="@null"
+            android:textSize="40sp" android:textColor="@color/black"
+            android:contentDescription="Case bas droit"/>
+
+    </GridLayout>
+
+</LinearLayout>

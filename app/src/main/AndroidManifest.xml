@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TicTacToeProject">
+
+        <!--
+            AccueilActivity est le POINT D'ENTRÉE de l'application (le launcher).
+            C'est pourquoi il contient l'intent-filter MAIN et LAUNCHER.
+        -->
+        <activity
+            android:name=".AccueilActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            MainActivity est une activité secondaire.
+            Elle n'a PAS d'intent-filter car elle est appelée UNIQUEMENT par l'AccueilActivity.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+        <!-- J'ai mis exported="false" car cette activité n'est pas censée être appelée par d'autres applications. -->
+
+    </application>
+
+</manifest>

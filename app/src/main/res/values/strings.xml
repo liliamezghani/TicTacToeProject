@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nom de l'application -->
+    <string name="app_name">TicTacToeProject</string>
+
+    <!-- Tableau des choix pour le nombre de parties du tournoi (utilisé dans le Spinner de l'AccueilActivity) -->
+    <string-array name="nb_parties_array">
+        <item>5</item>
+        <item>10</item>
+        <item>15</item>
+    </string-array>
+</resources>

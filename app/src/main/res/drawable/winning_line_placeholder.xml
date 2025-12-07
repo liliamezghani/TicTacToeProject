@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Simule l'effet de la ligne néon rouge -->
+    <solid android:color="#FF0000" />
+    <size android:height="8dp" />
+</shape>

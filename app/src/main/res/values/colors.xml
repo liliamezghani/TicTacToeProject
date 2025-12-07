@@ -12,5 +12,7 @@
     <color name="xo_blue_light">#64B5F6</color> <!-- Bleu clair boutons -->
     <color name="xo_blue_dark">#1565C0</color>  <!-- Bleu foncé boutons -->
     <color name="xo_bg_gray">#EEEEEE</color>    <!-- Fond gris des inputs -->
-    <color name="xo_score_bg">#D1EAFF</color>   <!-- Fond zone score -->
+    <color name="xo_score_bg">#D1EAFF</color>
+    <color name="neon_green" />
+    <color name="neon_purple" />   <!-- Fond zone score -->
 </resources>

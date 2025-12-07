@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- État coché (sélectionné) -->
+    <item android:state_checked="true">
+        <shape android:shape="rectangle">
+            <!-- Coins arrondis -->
+            <corners android:radius="12dp"/>
+            <!-- Fond plus foncé pour le contraste avec l'image de background -->
+            <solid android:color="#4A0080"/>
+            <!-- Bordure Bleue Néon (plus épaisse) -->
+            <stroke android:width="4dp" android:color="#00FFFF"/>
+        </shape>
+    </item>
+
+    <!-- État normal (non coché) -->
+    <item>
+        <shape android:shape="rectangle">
+            <!-- Coins arrondis -->
+            <corners android:radius="12dp"/>
+            <!-- Fond sombre (même que le fond d'écran) -->
+            <solid android:color="#1A0033"/>
+            <!-- Bordure Violette Néon -->
+            <stroke android:width="2dp" android:color="#C77DFF"/>
+        </shape>
+    </item>
+</selector>

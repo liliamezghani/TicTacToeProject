@@ -1,229 +1,341 @@
 package com.example.monprojettictactoe;
-
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Éléments d'interface utilisateur (UI)
-    private TextView tvPartieInfo, tvScoreX, tvScoreO, tvScoreNulles;
-    private Button[] buttons = new Button[9]; // Tableau pour gérer les 9 boutons de la grille
+    // Constante pour le nom du fichier de sauvegarde
+    private static final String FILENAME = "tournament_result.ser";
 
-    // État du jeu et du tournoi
-    private String playerSymbol;
-    private int maxGames;
-    private int currentGame = 1;
-    private String currentPlayer = "X";
-    private boolean gameActive = true;
+    // Éléments UI
+    private TextView tvPartieInfo;
+    private TextView tvScoreX;
+    private TextView tvScoreO;
+    private TextView tvPartiesNulles;
+    private TextView tvStatus;
+    private Button[] buttons = new Button[9];
+    private Button btnSauvegarderTournoi;
+    private Button btnRetourAccueil;
+    private Button btnSettings;
 
-    // Scores
+    // Logique de Jeu
+    private String playerSymbol; // Symbole du joueur actuel ("X" ou "O")
+    private String humanPlayer; // Symbole choisi par l'utilisateur ("X" ou "O")
+    private String machinePlayer; // Symbole de l'autre joueur
+    private int totalGames; // Nombre total de parties dans le tournoi
+    private int currentGame = 1; // Partie en cours (commence à 1)
+    private String[] board = new String[9]; // Représentation de la grille (état des 9 cases)
+
+    // Scores du Tournoi
     private int scoreX = 0;
     private int scoreO = 0;
-    private int scoreDraws = 0;
-
-    // État du plateau: 0 = vide, 1 = X, 2 = O
-    private int[] gameState = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-    // Combinaisons gagnantes (indices dans le tableau gameState)
-    private int[][] winPositions = {
-            {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Lignes
-            {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Colonnes
-            {0, 4, 8}, {2, 4, 6}             // Diagonales
-    };
+    private int draws = 0;
+    private boolean gameActive = true; // Indique si la partie actuelle est en cours
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Récupération des données de l'AccueilActivity
+        // Récupération des données passées par AccueilActivity
         Intent intent = getIntent();
-        playerSymbol = intent.getStringExtra("PLAYER_SYMBOL");
-        maxGames = intent.getIntExtra("MAX_GAMES", 5);
+        humanPlayer = intent.getStringExtra(AccueilActivity.EXTRA_SYMBOLE);
+        totalGames = intent.getIntExtra(AccueilActivity.EXTRA_NB_PARTIES, 5);
 
-        // 2. Initialisation des composants UI (TextViews)
+        // Détermination du symbole de l'adversaire
+        machinePlayer = humanPlayer.equals("X") ? "O" : "X";
+        playerSymbol = humanPlayer; // Le joueur qui commence est celui choisi par l'utilisateur
+
+        // 1. Initialisation des éléments UI
         tvPartieInfo = findViewById(R.id.tv_partie_info);
         tvScoreX = findViewById(R.id.tv_score_x);
         tvScoreO = findViewById(R.id.tv_score_o);
-        tvScoreNulles = findViewById(R.id.tv_score_nulles);
+        tvPartiesNulles = findViewById(R.id.tv_parties_nulles);
+        tvStatus = findViewById(R.id.tv_status);
+        btnSauvegarderTournoi = findViewById(R.id.btn_sauvegarder_tournoi);
+        btnRetourAccueil = findViewById(R.id.btn_retour_accueil);
+        btnSettings = findViewById(R.id.btn_settings);
 
-        // 3. Initialisation des 9 boutons de la grille
+        // Masquer les éléments de fin de tournoi au début
+        btnSauvegarderTournoi.setVisibility(View.GONE);
+        btnRetourAccueil.setVisibility(View.GONE);
+
+        // 2. Initialisation des boutons de la grille
+        GridLayout gridLayout = findViewById(R.id.grid_layout);
         for (int i = 0; i < 9; i++) {
-            String buttonID = "btn" + i;
-            // Récupère l'ID de la ressource (R.id.btn0, R.id.btn1, etc.) dynamiquement
-            int resID = getResources().getIdentifier(buttonID, "id", getPackageName());
-            buttons[i] = findViewById(resID);
+            // Assurez-vous que les IDs des boutons sont btn0, btn1, ... btn8
+            int buttonId = getResources().getIdentifier("btn" + i, "id", getPackageName());
+            buttons[i] = findViewById(buttonId);
+            buttons[i].setOnClickListener(this::onButtonClick);
+            board[i] = ""; // Initialiser le tableau de jeu
         }
 
-        // Mise à jour initiale de l'affichage
-        updateUI();
-    }
+        // 3. Configuration des boutons de fin
+        btnSauvegarderTournoi.setOnClickListener(v -> sauvegarderTournoi());
+        btnRetourAccueil.setOnClickListener(v -> retournerAccueil());
+        btnSettings.setOnClickListener(v -> Toast.makeText(this, "Paramètres non implémentés.", Toast.LENGTH_SHORT).show()); // Placeholder
 
-    // Méthode appelée lors du clic sur une case (définie dans XML via android:onClick="onGridClick")
-    public void onGridClick(View view) {
-        if (!gameActive) return; // Ignore si la partie est déjà terminée
-
-        Button clickedBtn = (Button) view;
-        int tappedTag = Integer.parseInt(clickedBtn.getTag().toString()); // Récupère le tag (0 à 8)
-
-        if (gameState[tappedTag] != 0) {
-            return; // Case déjà prise, on ne fait rien
-        }
-
-        // 1. Jouer le coup
-        gameState[tappedTag] = currentPlayer.equals("X") ? 1 : 2;
-        clickedBtn.setText(currentPlayer);
-
-        // 2. Vérifier le résultat
-        checkWinner();
+        // 4. Démarrer la première partie et mettre à jour l'affichage
+        updateDisplay();
+        resetBoard();
     }
 
     /**
-     * Vérifie si un joueur a gagné ou si c'est un match nul.
+     * Gère les clics sur la grille.
      */
-    private void checkWinner() {
-        boolean hasWinner = false;
+    private void onButtonClick(View view) {
+        if (!gameActive) {
+            Toast.makeText(this, "La partie est terminée. Passez à la suivante.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // 1. Vérifier les combinaisons gagnantes
-        for (int[] winPos : winPositions) {
-            if (gameState[winPos[0]] == gameState[winPos[1]] &&
-                    gameState[winPos[1]] == gameState[winPos[2]] &&
-                    gameState[winPos[0]] != 0) {
-                hasWinner = true;
+        Button btn = (Button) view;
+        int clickedPos = -1;
+
+        // Trouver la position du bouton cliqué
+        for (int i = 0; i < 9; i++) {
+            if (buttons[i] == btn) {
+                clickedPos = i;
                 break;
             }
         }
 
-        if (hasWinner) {
-            gameActive = false; // Arrêter la partie
-            // Mise à jour du score
-            if (currentPlayer.equals("X")) scoreX++; else scoreO++;
-            showRoundResult("Victoire du joueur " + currentPlayer + " !");
-        } else {
-            // 2. Vérifier match nul
-            boolean isDraw = true;
-            for (int state : gameState) {
-                if (state == 0) isDraw = false; // Si une case est vide, ce n'est pas un match nul
+        // Si la case est vide, jouer le coup
+        if (board[clickedPos].isEmpty()) {
+            board[clickedPos] = playerSymbol;
+            btn.setText(playerSymbol);
+            // Définir la couleur néon appropriée pour le symbole
+            if (playerSymbol.equals("X")) {
+                // Néon Rose (FF4DFF)
+                btn.setTextColor(Color.parseColor("#FF4DFF"));
+            } else {
+                // Néon Bleu (00FFFF)
+                btn.setTextColor(Color.parseColor("#00FFFF"));
             }
 
-            if (isDraw) {
-                gameActive = false;
-                scoreDraws++;
-                showRoundResult("Partie Nulle !");
+            // Vérifier si la partie est terminée
+            if (checkForWin()) {
+                endGame(playerSymbol); // Victoire
+            } else if (isBoardFull()) {
+                endGame("draw"); // Partie nulle
             } else {
-                // 3. Changer de joueur pour le prochain coup
-                currentPlayer = currentPlayer.equals("X") ? "O" : "X";
+                // Changer de joueur pour le prochain tour (X -> O ou O -> X)
+                switchPlayer();
             }
         }
     }
 
     /**
-     * Affiche le résultat de la manche et prépare le passage à la suivante.
+     * Inverse le joueur actuel et met à jour le statut.
      */
-    private void showRoundResult(String message) {
-        updateUI(); // Met à jour les scores affichés
+    private void switchPlayer() {
+        playerSymbol = playerSymbol.equals("X") ? "O" : "X";
+        updateDisplay();
+    }
 
-        if (currentGame < maxGames) {
-            // Tournoi en cours : proposer de passer à la partie suivante
-            new AlertDialog.Builder(this)
-                    .setTitle("Fin de la Partie " + currentGame)
-                    .setMessage(message + "\n\nCliquer sur Suivant pour commencer la partie " + (currentGame + 1) + ".")
-                    .setCancelable(false)
-                    .setPositiveButton("Suivant", (dialog, which) -> resetBoard())
-                    .show();
+    /**
+     * Vérifie toutes les combinaisons gagnantes.
+     */
+    private boolean checkForWin() {
+        // Définir les combinaisons gagnantes
+        int[][] winPositions = {
+                {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Lignes
+                {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Colonnes
+                {0, 4, 8}, {2, 4, 6}             // Diagonales
+        };
+
+        for (int[] combo : winPositions) {
+            String p1 = board[combo[0]];
+            String p2 = board[combo[1]];
+            String p3 = board[combo[2]];
+
+            if (!p1.isEmpty() && p1.equals(p2) && p1.equals(p3)) {
+                // Code pour dessiner la ligne gagnante (visuel, non implémenté ici,
+                // mais le layout tv_winning_line est là pour ça si vous voulez l'ajouter plus tard)
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Vérifie si toutes les cases sont remplies.
+     */
+    private boolean isBoardFull() {
+        for (String s : board) {
+            if (s.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Gère la fin d'une partie (victoire ou nulle).
+     */
+    private void endGame(String winner) {
+        gameActive = false;
+        String statusMessage;
+
+        if (winner.equals("draw")) {
+            draws++;
+            statusMessage = "Partie Nulle!";
+        } else {
+            if (winner.equals("X")) {
+                scoreX++;
+            } else {
+                scoreO++;
+            }
+            statusMessage = "Victoire de " + winner + "!";
+        }
+
+        tvStatus.setText(statusMessage);
+        tvStatus.setTextColor(Color.parseColor("#FFFFFF"));
+        Toast.makeText(this, statusMessage, Toast.LENGTH_LONG).show();
+
+        // Si ce n'est pas la dernière partie, passer à la suivante après un délai
+        if (currentGame < totalGames) {
+            currentGame++;
+            // On peut ajouter un délai ici avec un Handler.postDelayed si on voulait un effet d'attente
+            resetBoard(); // Passe immédiatement à la partie suivante pour la démo
         } else {
             // Fin du tournoi
             endTournament();
         }
+        updateDisplay();
     }
 
     /**
-     * Réinitialise le plateau de jeu pour une nouvelle manche.
+     * Réinitialise la grille pour la partie suivante.
      */
     private void resetBoard() {
-        currentGame++;
-        gameActive = true;
-        Arrays.fill(gameState, 0); // Remet l'état à vide
-        currentPlayer = "X";       // Le joueur X recommence (convention)
-
-        // Efface les symboles des boutons
+        Arrays.fill(board, "");
         for (Button btn : buttons) {
             btn.setText("");
+            btn.setEnabled(true);
         }
-        updateUI();
+
+        // Le joueur qui commence est toujours celui qui a perdu la partie précédente ou le joueur humain (si première partie)
+        playerSymbol = (currentGame % 2 != 0) ? humanPlayer : machinePlayer;
+
+        gameActive = true;
+        updateDisplay();
     }
 
     /**
-     * Met à jour les TextViews des scores et de l'indicateur de partie.
+     * Met à jour tous les TextViews de l'interface.
      */
-    private void updateUI() {
-        tvPartieInfo.setText("Partie " + currentGame + " / " + maxGames);
-        tvScoreX.setText("Score du joueur X: " + scoreX);
-        tvScoreO.setText("Score du Joueur O: " + scoreO);
-        tvScoreNulles.setText("Nombre de parties nulles: " + scoreDraws);
+    private void updateDisplay() {
+        // Mise à jour de l'information de la partie
+        tvPartieInfo.setText(String.format("PARTIE %d / %d", currentGame, totalGames));
+
+        // Mise à jour des scores
+        tvScoreX.setText(String.format("Joueur X %d", scoreX));
+        tvScoreO.setText(String.format("%d Joueur O", scoreO)); // Format adapté à l'image
+        tvPartiesNulles.setText(String.format(" PARTIES NULLES: %d", draws));
+
+        // Mise à jour du statut du tour
+        if (gameActive) {
+            tvStatus.setText(String.format("C'est le tour de %s", playerSymbol));
+            tvStatus.setTextColor(Color.parseColor("#C77DFF")); // Couleur néon violet
+        }
     }
 
     /**
-     * Gère la fin du tournoi, détermine le vainqueur et propose la sauvegarde.
+     * Gère la fin complète du tournoi.
      */
     private void endTournament() {
-        String tournoiWinner;
-        if (scoreX > scoreO) tournoiWinner = "Joueur X";
-        else if (scoreO > scoreX) tournoiWinner = "Joueur O";
-        else tournoiWinner = "Égalité";
+        // 1. Déterminer le vainqueur du tournoi
+        String tournamentWinner;
+        String finalMessage;
+        int color;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("FIN DU TOURNOI");
-        builder.setMessage("RÉSULTAT FINAL : " + tournoiWinner + "\n\nScore final X: " + scoreX + "\nScore final O: " + scoreO + "\nParties nulles: " + scoreDraws);
-        builder.setCancelable(false); // Force l'utilisateur à choisir une action
+        if (scoreX > scoreO) {
+            tournamentWinner = "Joueur X";
+            finalMessage = "VICTOIRE DU JOUEUR X";
+            color = Color.parseColor("#FF4DFF"); // Rose
+        } else if (scoreO > scoreX) {
+            tournamentWinner = "Joueur O";
+            finalMessage = "VICTOIRE DU JOUEUR O";
+            color = Color.parseColor("#00FFFF"); // Bleu
+        } else {
+            tournamentWinner = "Égalité";
+            finalMessage = "ÉGALITÉ DU TOURNOI";
+            color = Color.parseColor("#C77DFF"); // Violet
+        }
 
-        // Bouton 1: Sauvegarder et Revenir
-        builder.setPositiveButton("Sauvegarder le tournoi", (dialog, which) -> {
-            saveTournamentData(tournoiWinner);
-            finish(); // Ferme l'activité et revient à AccueilActivity
-        });
+        // 2. Afficher le résultat final
+        tvStatus.setText(finalMessage);
+        tvStatus.setTextColor(color);
 
-        // Bouton 2: Revenir sans sauvegarder
-        builder.setNegativeButton("Revenir à l'accueil", (dialog, which) -> {
-            finish(); // Ferme l'activité et revient à AccueilActivity
-        });
+        // 3. Masquer la grille et afficher les options de fin
+        for (Button btn : buttons) {
+            btn.setEnabled(false); // Désactiver la grille
+        }
 
-        builder.show();
+        // Rendre visibles les boutons de fin de tournoi
+        btnSauvegarderTournoi.setVisibility(View.VISIBLE);
+        btnRetourAccueil.setVisibility(View.VISIBLE);
+
+        // Optionnel: Afficher un AlertDialog pour les résultats
+        new AlertDialog.Builder(this)
+                .setTitle("Tournoi Terminé")
+                .setMessage(finalMessage + "\n\nScores: X=" + scoreX + ", O=" + scoreO + ", Nulles=" + draws)
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     /**
-     * Sérialise et enregistre les résultats du tournoi dans un fichier interne.
+     * Sauvegarde l'objet TournamentResult dans le fichier interne par sérialisation.
      */
-    private void saveTournamentData(String winner) {
-        try {
-            // Création de l'objet de résultat à sérialiser
-            TournamentResult result = new TournamentResult(scoreX, scoreO, scoreDraws, maxGames, winner);
+    private void sauvegarderTournoi() {
+        // 1. Déterminer le vainqueur
+        String winner;
+        if (scoreX > scoreO) {
+            winner = "Joueur X";
+        } else if (scoreO > scoreX) {
+            winner = "Joueur O";
+        } else {
+            winner = "Égalité";
+        }
 
-            // Ouvrir le fichier en écriture
-            FileOutputStream fos = openFileOutput("last_tournament.ser", Context.MODE_PRIVATE);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
+        // 2. Créer l'objet résultat
+        TournamentResult result = new TournamentResult(scoreX, scoreO, draws, totalGames, winner);
 
-            // Écriture de l'objet dans le fichier
+        // 3. Sauvegarder
+        try (FileOutputStream fos = openFileOutput(FILENAME, Context.MODE_PRIVATE);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+
             oos.writeObject(result);
+            Toast.makeText(this, "Tournoi sauvegardé avec succès !", Toast.LENGTH_LONG).show();
 
-            // Fermeture des flux
-            oos.close();
-            fos.close();
-
-            Toast.makeText(this, "Tournoi sauvegardé avec succès !", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Erreur lors de la sauvegarde du tournoi.", Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Retourne à l'activité d'accueil.
+     */
+    private void retournerAccueil() {
+        Intent intent = new Intent(MainActivity.this, AccueilActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
 }

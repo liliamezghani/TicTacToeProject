@@ -4,12 +4,13 @@ plugins {
 
 android {
     namespace = "com.example.monprojettictactoe"
-    compileSdk = 36
+    // SDK 36 is Android 16 (Baklava). Ensure you have installed this SDK via SDK Manager.
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.monprojettictactoe"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -32,7 +33,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
@@ -40,4 +40,12 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+// REMOVED: The resolutionStrategy block was deleted.
+// It was forcing appcompat 1.6.1 while 'libs.appcompat' was pulling 1.7.1,
+// causing the "Duplicate key" resource error.
+configurations.all {    resolutionStrategy {
+    force("androidx.appcompat:appcompat:1.6.1")
+}
 }

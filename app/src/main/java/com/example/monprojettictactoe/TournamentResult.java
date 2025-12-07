@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 // Cette classe implémente Serializable pour être sauvegardée dans un fichier
 public class TournamentResult implements Serializable {
+    public Object draws;
     private int scoreX;
     private int scoreO;
     private int drawCount;
